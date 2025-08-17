@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, FileDown, FileSpreadsheet } from 'lucide-react'
+import { FileDown, FileSpreadsheet } from 'lucide-react'
 import { Document, Packer, Paragraph, TextRun } from 'docx'
 
 interface ExportButtonProps {

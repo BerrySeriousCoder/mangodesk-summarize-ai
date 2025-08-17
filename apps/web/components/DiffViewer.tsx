@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { GitCompare, EyeOff, Plus, Minus } from 'lucide-react'
 
 interface DiffViewerProps {
@@ -21,13 +21,7 @@ interface DiffLine {
 export function DiffViewer({ currentContent, previousContent, showDiff, onToggleDiff }: DiffViewerProps) {
   const [diffLines, setDiffLines] = useState<DiffLine[]>([])
 
-  useEffect(() => {
-    if (showDiff) {
-      generateDiff(currentContent, previousContent)
-    }
-  }, [currentContent, previousContent, showDiff])
-
-  const generateDiff = (current: string, previous: string) => {
+  const generateDiff = useCallback((current: string, previous: string) => {
     // Handle empty content cases
     if (!current && !previous) {
       setDiffLines([])
@@ -61,7 +55,13 @@ export function DiffViewer({ currentContent, previousContent, showDiff, onToggle
     
     const diff = computeSimpleDiff(previousLines, currentLines)
     setDiffLines(diff)
-  }
+  }, [])
+
+  useEffect(() => {
+    if (showDiff) {
+      generateDiff(currentContent, previousContent)
+    }
+  }, [currentContent, previousContent, showDiff, generateDiff])
 
   const computeSimpleDiff = (oldLines: string[], newLines: string[]): DiffLine[] => {
     const diff: DiffLine[] = []
@@ -82,7 +82,7 @@ export function DiffViewer({ currentContent, previousContent, showDiff, onToggle
         newIndex++
       } else {
         let foundMatch = false
-        let lookAheadDistance = 3 // Look ahead up to 3 lines
+        const lookAheadDistance = 3 // Look ahead up to 3 lines
         
         for (let i = 1; i <= lookAheadDistance && oldIndex + i < oldLines.length; i++) {
           if (newIndex < newLines.length && oldLines[oldIndex + i] === newLines[newIndex]) {

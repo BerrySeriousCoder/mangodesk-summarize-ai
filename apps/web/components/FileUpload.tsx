@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, File, X, AlertCircle, CheckCircle } from 'lucide-react'
+import { Upload, File, X, CheckCircle } from 'lucide-react'
 import { useAppStore, FileData } from '@/store/appStore'
 import API_ENDPOINTS from '@/config/api'
 
@@ -40,7 +40,7 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
         throw new Error('Only .txt and .docx files are allowed')
       }
 
-      const text = await file?.text() || ''
+
 
       const formData = new FormData()
       if (file) {

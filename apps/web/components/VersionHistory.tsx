@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, History, Clock, Edit3, Eye } from 'lucide-react'
-import { SummaryData, SummaryVersion } from '@/store/appStore'
+import { useState, useEffect, useCallback } from 'react'
+import { ChevronLeft, ChevronRight, History, Clock } from 'lucide-react'
 import { DiffViewer } from './DiffViewer'
 import API_ENDPOINTS from '@/config/api'
 import { MarkdownRenderer } from './MarkdownRenderer'
@@ -28,23 +27,7 @@ export function VersionHistory({ summaryId, onVersionSelect, selectedVersionId }
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null)
   const [showDiff, setShowDiff] = useState(false)
 
-  useEffect(() => {
-    if (summaryId) {
-      fetchVersionHistory()
-    }
-  }, [summaryId])
-
-  // Sync selected version with prop
-  useEffect(() => {
-    if (selectedVersionId && versions.length > 0) {
-      const version = versions.find(v => v.id === selectedVersionId)
-      if (version) {
-        setSelectedVersion(version)
-      }
-    }
-  }, [selectedVersionId, versions])
-
-  const fetchVersionHistory = async () => {
+  const fetchVersionHistory = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -71,7 +54,23 @@ export function VersionHistory({ summaryId, onVersionSelect, selectedVersionId }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [summaryId])
+
+  useEffect(() => {
+    if (summaryId) {
+      fetchVersionHistory()
+    }
+  }, [summaryId, fetchVersionHistory])
+
+  // Sync selected version with prop
+  useEffect(() => {
+    if (selectedVersionId && versions.length > 0) {
+      const version = versions.find(v => v.id === selectedVersionId)
+      if (version) {
+        setSelectedVersion(version)
+      }
+    }
+  }, [selectedVersionId, versions])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

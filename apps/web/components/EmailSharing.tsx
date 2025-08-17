@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Mail, ArrowLeft, Send, CheckCircle, Users, MessageSquare } from 'lucide-react'
-import { useAppStore, SummaryData } from '@/store/appStore'
+import { SummaryData } from '@/store/appStore'
 import React from 'react'
 import API_ENDPOINTS from '@/config/api'
 

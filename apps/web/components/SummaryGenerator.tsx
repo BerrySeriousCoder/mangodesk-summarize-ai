@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2, CheckCircle, AlertCircle, FileText, Lightbulb } from 'lucide-react'
+import { Sparkles, Loader2, FileText, Lightbulb } from 'lucide-react'
 import { useAppStore, FileData } from '@/store/appStore'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import API_ENDPOINTS from '@/config/api'

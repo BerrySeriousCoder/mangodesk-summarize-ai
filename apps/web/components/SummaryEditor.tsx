@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Edit3, Save, ArrowLeft, History, CheckCircle, GitCompare, Plus, Minus, X } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Edit3, Save, ArrowLeft, CheckCircle, GitCompare, X } from 'lucide-react'
 import { useAppStore, SummaryData } from '@/store/appStore'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { ExportButton } from './ExportButton'
@@ -15,13 +15,6 @@ interface SummaryEditorProps {
   onVersionCreated?: () => void
 }
 
-interface DiffLine {
-  type: 'added' | 'removed' | 'unchanged'
-  content: string
-  currentLineNumber?: number
-  previousLineNumber?: number
-}
-
 export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: SummaryEditorProps) {
   const [content, setContent] = useState(summary.content)
   const [isEditing, setIsEditing] = useState(false)
@@ -29,7 +22,7 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
-  const [currentVersion, setCurrentVersion] = useState(summary)
+
   const [showDiff, setShowDiff] = useState(false)
   const [versionHistory, setVersionHistory] = useState<Array<{
     id: string
@@ -43,19 +36,13 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
 
   useEffect(() => {
     setHasChanges(content !== summary.content)
-  }, [summary.id])
+  }, [summary.id, content, summary.content])
 
   useEffect(() => {
     setHasChanges(content !== summary.content)
   }, [content, summary.content])
 
-  useEffect(() => {
-    if (summary.id) {
-      fetchVersionHistory()
-    }
-  }, [summary.id])
-
-  const fetchVersionHistory = async () => {
+  const fetchVersionHistory = useCallback(async () => {
     try {
       setIsLoadingVersions(true)
       const response = await fetch(API_ENDPOINTS.GET_SUMMARY_VERSIONS(summary.id))
@@ -70,7 +57,13 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
     } finally {
       setIsLoadingVersions(false)
     }
-  }
+  }, [summary.id])
+
+  useEffect(() => {
+    if (summary.id) {
+      fetchVersionHistory()
+    }
+  }, [summary.id, fetchVersionHistory])
 
   const getPreviousVersionContent = (versionNumber: number): string => {
     if (versionNumber <= 0) return ''
@@ -146,124 +139,7 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
     setContent(e.target.value)
   }
 
-  const handleVersionSelect = (version: any) => {
-    setCurrentVersion(version)
-    setContent(version.content)
-    setHasChanges(false)
-    setIsEditing(false)
-  }
-
   const wordCount = content.trim().split(/\s+/).filter(word => word.length > 0).length
-
-  const generateDiffLines = (currentContent: string, previousContent: string) => {
-    if (!currentContent && !previousContent) {
-      return []
-    }
-
-    if (!currentContent) {
-      const previousLines = previousContent.split('\n')
-      const diff: DiffLine[] = previousLines.map((line, index) => ({
-        type: 'removed',
-        content: line,
-        previousLineNumber: index + 1
-      }))
-      return diff
-    }
-
-    if (!previousContent) {
-      const currentLines = currentContent.split('\n')
-      const diff: DiffLine[] = currentLines.map((line, index) => ({
-        type: 'added',
-        content: line,
-        currentLineNumber: index + 1
-      }))
-      return diff
-    }
-
-    const currentLines = currentContent.split('\n')
-    const previousLines = previousContent.split('\n')
-
-    const diff = computeSimpleDiff(previousLines, currentLines)
-    
-    return diff
-  }
-
-  const computeSimpleDiff = (oldLines: string[], newLines: string[]): DiffLine[] => {
-    const diff: DiffLine[] = []
-    
-    let oldIndex = 0
-    let newIndex = 0
-    
-    while (oldIndex < oldLines.length || newIndex < newLines.length) {
-      if (oldIndex < oldLines.length && newIndex < newLines.length && 
-          oldLines[oldIndex] === newLines[newIndex]) {
-        diff.push({
-          type: 'unchanged',
-          content: oldLines[oldIndex] || '',
-          currentLineNumber: newIndex + 1,
-          previousLineNumber: oldIndex + 1
-        })
-        oldIndex++
-        newIndex++
-      } else {
-        let foundMatch = false
-        let lookAheadDistance = 3 
-        
-        for (let i = 1; i <= lookAheadDistance && oldIndex + i < oldLines.length; i++) {
-          if (newIndex < newLines.length && oldLines[oldIndex + i] === newLines[newIndex]) {
-            for (let j = 0; j < i; j++) {
-              diff.push({
-                type: 'removed',
-                content: oldLines[oldIndex + j] || '',
-                previousLineNumber: oldIndex + j + 1
-              })
-            }
-            oldIndex += i
-            foundMatch = true
-            break
-          }
-        }
-        
-        if (!foundMatch) {
-          for (let i = 1; i <= lookAheadDistance && newIndex + i < newLines.length; i++) {
-            if (oldIndex < oldLines.length && newLines[newIndex + i] === oldLines[oldIndex]) {
-              for (let j = 0; j < i; j++) {
-                diff.push({
-                  type: 'added',
-                  content: newLines[newIndex + j] || '',
-                  currentLineNumber: newIndex + j + 1
-                })
-              }
-              newIndex += i
-              foundMatch = true
-              break
-            }
-          }
-        }
-        
-        if (!foundMatch) {
-          if (oldIndex < oldLines.length) {
-            diff.push({
-              type: 'removed',
-              content: oldLines[oldIndex] || '',
-              previousLineNumber: oldIndex + 1
-            })
-            oldIndex++
-          }
-          if (newIndex < newLines.length) {
-            diff.push({
-              type: 'added',
-              content: newLines[newIndex] || '',
-              currentLineNumber: newIndex + 1
-            })
-            newIndex++
-          }
-        }
-      }
-    }
-    
-    return diff
-  }
 
   return (
     <div className="card">
@@ -450,7 +326,7 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
         </button>
         
         <div className="flex items-center space-x-3">
-          <ExportButton content={currentVersion.content} />
+          <ExportButton content={summary.content} />
           
           {hasChanges && (
             <div className="flex items-center space-x-3 text-amber-400">
@@ -490,4 +366,4 @@ export function SummaryEditor({ summary, onEdited, onBack, onVersionCreated }: S
       )}
     </div>
   )
-} 
+}
