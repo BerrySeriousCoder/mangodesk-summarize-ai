@@ -1,7 +1,20 @@
 import mammoth from 'mammoth';
 import { FileProcessingResult } from '../types';
 
-export async function processFile(file: Express.Multer.File): Promise<FileProcessingResult> {
+// Define the file type interface locally to avoid Express namespace issues
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
+  destination?: string;
+  filename?: string;
+  path?: string;
+}
+
+export async function processFile(file: MulterFile): Promise<FileProcessingResult> {
   try {
     let content = '';
     let fileType = '';
@@ -43,7 +56,6 @@ export async function processFile(file: Express.Multer.File): Promise<FileProces
       };
     }
 
-    
     const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
 
     if (wordCount > 10000) {
