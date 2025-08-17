@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { EmailRequest, EmailResponse } from '../types';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ISectionOptions } from 'docx';
 
 // Lazy initialization - only create Resend instance when needed
 let resendInstance: Resend | null = null;
@@ -19,7 +19,7 @@ function getResendInstance(): Resend {
 async function createDocxAttachment(content: string, fileName: string): Promise<Buffer> {
   // Parse content to identify headers and structure
   const lines = content.split('\n')
-  const docElements = []
+  const docElements: Paragraph[] = [] // Explicitly type as Paragraph[]
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]?.trim() || ''
